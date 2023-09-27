@@ -10,18 +10,21 @@ class('Cursor').extends(gfx.sprite)
 
 function Cursor:init(col, row)
 	Cursor.super.init(self)
-	self.col = col
-	self.row = r
-	-- self:setCenter(0, 0)
 	self:setLocation(col, row)
 
 	self._isBig = false
 	self._wasBig = true
-	-- self._anim = gfx.animation.blinker.new(500, 500, true)
 end
 
 function Cursor:setLocation(col, row)
+	self._col = col
+	self._row = row
 	self:moveTo((col - 1) * PxSize + HalfSize, (row - 1) * 20 + HalfSize)
+	self:setZIndex(100)
+end
+
+function Cursor:getLocation()
+	return self._col, self._row
 end
 
 function Cursor:update()
@@ -32,9 +35,11 @@ function Cursor:update()
 
 	local image = gfx.image.new(20, 20)
 	gfx.pushContext(image)
-	-- gfx.setLineWidth(self._isBig and 2 or 1)
 	local size = 5
 	if self._isBig then size += 1 end
+	gfx.setColor(gfx.kColorWhite)
+	gfx.fillCircleAtPoint(HalfSize, HalfSize, 7)
+	gfx.setColor(gfx.kColorBlack)
 	gfx.fillCircleAtPoint(HalfSize, HalfSize, size)
 	gfx.popContext()
 	self:setImage(image)

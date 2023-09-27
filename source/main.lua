@@ -1,6 +1,7 @@
 import "CoreLibs/graphics"
 import "Grid"
 import "Cursor"
+import "Fill"
 
 PxSize = 20
 HalfSize = PxSize / 2
@@ -16,6 +17,8 @@ local cursorRow = 2
 
 local cursor = Cursor(cursorCol, cursorRow)
 cursor:add()
+
+local fills = {}
 
 function playdate.update()
     gfx.sprite.update()
@@ -44,4 +47,20 @@ end
 function pd.leftButtonDown()
     cursorCol -= 1
     updateCursor()
+end
+
+function pd.AButtonDown()
+    local col, row = cursor:getLocation()
+    print(col .. ', ' .. row)
+    local fill = Fill(col, row)
+    table.insert(fills, fill)
+    fill:add()
+end
+
+function pd.BButtonDown()
+    for i, fill in ipairs(fills) do
+        fill:remove()
+    end
+
+    fills = {}
 end
