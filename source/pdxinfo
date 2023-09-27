@@ -1,7 +1,7 @@
-name=Game Name
-author=Author Name
-description=This is a Playdate game.
-bundleID=com.domain.GameName
+name=Pix Grid
+author=Jay Gillibrand
+description=A simple pixel art toy.
+bundleID=com.gillibrand.jay.pixelgrid
 version=1.0
 imagePath=SystemAssets/
-buildNumber=1
+buildNumber=40
