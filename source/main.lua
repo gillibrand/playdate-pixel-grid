@@ -1,7 +1,8 @@
 import "CoreLibs/graphics"
 import "Grid"
 import "Cursor"
-import "Fill"
+import "Block"
+import "matrix"
 
 PxSize = 20
 HalfSize = PxSize / 2
@@ -18,49 +19,69 @@ local cursorRow = 2
 local cursor = Cursor(cursorCol, cursorRow)
 cursor:add()
 
-local fills = {}
+-- local blocks = {}
+local blocks = matrix.new(20, 12)
+
+-- m = matrix.new(3, 2)
+-- -- print(m)
+-- matrix.set(m, 1, 2, true)
+-- matrix.set(m, 2, 1, 'hi')
+-- matrix.set(m, 2, 2, 'two')
+-- matrix.dump(m)
 
 function playdate.update()
-    gfx.sprite.update()
-    pd.timer.updateTimers()
+  gfx.sprite.update()
+  pd.timer.updateTimers()
 end
 
 function updateCursor()
-    cursor:setLocation(cursorCol, cursorRow)
+  cursor:setLocation(cursorCol, cursorRow)
 end
 
 function pd.downButtonDown()
-    cursorRow += 1
-    updateCursor()
+  cursorRow = math.min(12, cursorRow + 1)
+  updateCursor()
 end
 
 function pd.upButtonDown()
-    cursorRow -= 1
-    updateCursor()
+  cursorRow = math.max(1, cursorRow - 1)
+  updateCursor()
 end
 
 function pd.rightButtonDown()
-    cursorCol += 1
-    updateCursor()
+  cursorCol = math.min(20, cursorCol + 1)
+  updateCursor()
 end
 
 function pd.leftButtonDown()
-    cursorCol -= 1
-    updateCursor()
+  cursorCol = math.max(1, cursorCol - 1)
+  updateCursor()
 end
 
 function pd.AButtonDown()
-    local col, row = cursor:getLocation()
-    print(col .. ', ' .. row)
-    local fill = Fill(col, row)
-    table.insert(fills, fill)
-    fill:add()
+  local col, row = cursor:getLocation()
+  local oldBlock = matrix.remove(blocks, col, row)
+  if oldBlock ~= nil then
+    oldBlock:remove()
+  else
+    local block = Block(col, row)
+    matrix.set(blocks, col, row, block)
+    block:add()
+  end
 end
 
 function pd.BButtonDown()
-    for i, fill in ipairs(fills) do
-        fill:remove()
-    end
-
-    fills = {}
+  clearBlocks()
 end
+
+function clearBlocks()
+  local fallingBlocks = blocks
+  blocks = matrix.new(20, 12)
+
+  local x = matrix.all(fallingBlocks)
+  for _, block in ipairs(matrix.all(fallingBlocks)) do
+    block:fall()
+  end
+end
+
+pd.getSystemMenu():addMenuItem('Erase All', clearBlocks)
