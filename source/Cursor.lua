@@ -17,9 +17,9 @@ function Cursor:init(col, row)
 end
 
 function Cursor:setLocation(col, row)
-  self._col = col
-  self._row = row
-  self:moveTo((col - 1) * PxSize + HalfSize, (row - 1) * 20 + HalfSize)
+  self._col = math.max(1, math.min(20, col))
+  self._row = math.max(1, math.min(12, row))
+  self:moveTo((self._col - 1) * PxSize + HalfSize, (self._row - 1) * 20 + HalfSize)
   self:setZIndex(100)
 end
 

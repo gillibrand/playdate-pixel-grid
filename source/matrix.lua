@@ -1,65 +1,57 @@
 matrix = {}
 
-function new(w, h)
+function matrix.new(w, h)
 	return {
 		_cols = w,
 		_rows = h
 	}
 end
 
-matrix.new = new
-
 function index(mat, x, y)
-	-- print(string.format('x%d, y%d', x, y))
-	local i = (mat._rows * (y - 1)) + x
-	-- print('index', i)
+	local i = (mat._cols * (y - 1)) + x
 	return i
 end
 
-function set(mat, x, y, value)
+function matrix.set(mat, x, y, value)
 	local i = index(mat, x, y);
-	-- print('set index', i)
 	mat[i] = value
 end
 
-matrix.set = set
-
-function get(mat, x, y)
-	return mat[index(mat, x, y)]
+function matrix.get(mat, x, y)
+	local i = index(mat, x, y)
+	print('i', i)
+	return mat[i]
 end
 
-matrix.get = get
-
-function remove(mat, x, y)
+--- Removes element at given coords.
+-- @param mat The matrix to modify.
+-- @param x X position to remove.
+-- @param y Y position to remove.
+-- @return The old value, or nil is was aleady empty.
+function matrix.remove(mat, x, y)
 	local i = index(mat, x, y)
 	local value = mat[i]
 	mat[i] = nil
 	return value
 end
 
-matrix.remove = remove
-
-function dump(mat)
-	-- print('mat._w' .. mat._w)
-	-- for i = 1, #mat do
-	-- 	print(mat[i])
-	-- end
-
-	for col = 1, mat._cols do
+function matrix.log(mat)
+	for col = 1, mat._rows do
 		local line = ""
 
-		for row = 1, mat._rows do
-			local value = get(mat, row, col)
-			line = line .. (value and 'x' or '-') .. ', '
+		for row = 1, mat._cols do
+			local value = matrix.get(mat, row, col)
+			line = line .. (value and 'x' or '.')
 		end
 		print(line)
 	end
 end
 
-matrix.print = dump
+function matrix.size(mat)
+	return mat._cols, mat._rows
+end
 
-function all(mat)
-	-- local i = 1
+function matrix.all(mat)
 	local n = mat._rows * mat._cols
 
 	local list = {}
@@ -71,19 +63,4 @@ function all(mat)
 	end
 
 	return list
-	-- end
-	-- -- iter, t, i = ipairs(mat)
-	-- return function()
-	-- 	while true do
-	-- 		if i > n then
-	-- 			print('end')
-	-- 			return nil
-	-- 		end
-
-	-- 		local value = mat[i]
-	-- 		if value ~= nil then return value end
-	-- 	end
-	-- end
 end
-
-matrix.all = all

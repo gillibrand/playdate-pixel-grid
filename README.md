@@ -6,4 +6,4 @@ Move with d-pad.
 Make a pixel square black with A.
 Erase all squares with B.
 
-No save! No single square erase!
+No save!
