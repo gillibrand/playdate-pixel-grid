@@ -19,7 +19,6 @@ end
 
 function matrix.get(mat, x, y)
 	local i = index(mat, x, y)
-	print('i', i)
 	return mat[i]
 end
 

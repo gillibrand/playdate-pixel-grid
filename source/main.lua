@@ -4,6 +4,7 @@ import "Grid"
 import "Cursor"
 import "Block"
 import "matrix"
+import "dialog"
 
 PxSize = 20
 HalfSize = PxSize / 2
@@ -19,13 +20,21 @@ local didRemoveBlock = false
 local cursor = Cursor(2, 2)
 cursor:add()
 
+local dialog
+
 ROWS = 12
 COLS = 20
 
--- local blocks = {}
+InDraw = 0
+InDialog = 1
+
+local state = InDraw
+
 local blocks = matrix.new(COLS, ROWS)
-local PIX1 <const> = 'pix1'
-local META <const> = 'metadata'
+
+local Pix1 <const> = 'pix1'
+local Pix2 <const> = 'pix2'
+local Metadata <const> = 'metadata'
 
 function addBlock(col, row)
   local block = Block(col, row)
@@ -36,7 +45,7 @@ end
 function save()
   -- Save matrix file
   local blockCoords = {}
-  matrix.log(blocks)
+  -- matrix.log(blocks)
 
   for row = 1, COLS do
     for col = 1, ROWS do
@@ -49,17 +58,17 @@ function save()
   end
 
   -- Save cursor loc (metadata file)
-  pd.datastore.write(blockCoords, PIX1)
+  pd.datastore.write(blockCoords, Pix1)
 
   local row, col = cursor:getLocation()
   local metadata = {}
   metadata.cursor = { row, col }
-  pd.datastore.write(metadata, META)
-  local x = pd.datastore.read(META)
+  pd.datastore.write(metadata, Metadata)
+  local x = pd.datastore.read(Metadata)
 end
 
---- Clears all visible blocks and animates them away
-function clearBlocks()
+--- Erases all visible blocks and animates them away
+function eraseAllBlocks()
   local fallingBlocks = blocks
   blocks = matrix.new(20, 12)
 
@@ -78,16 +87,16 @@ function logTable(t)
 end
 
 function load()
-  clearBlocks()
+  eraseAllBlocks()
 
-  local blockCoords = pd.datastore.read(PIX1)
+  local blockCoords = pd.datastore.read(Pix1)
   if blockCoords then
     for i, coord in ipairs(blockCoords) do
       addBlock(coord[1], coord[2])
     end
   end
 
-  local metadata = pd.datastore.read(META)
+  local metadata = pd.datastore.read(Metadata)
   if metadata then
     local coords = metadata['cursor']
     if coords then
@@ -101,7 +110,14 @@ load()
 function playdate.update()
   gfx.sprite.update()
   pd.timer.updateTimers()
+  -- pd.drawFPS(10, 10)
+
+  handleInput()
 end
+
+-- function pd.debugDraw()
+--   pd.drawFPS(10, 10)
+-- end
 
 function toggleBlockIfAButtonDown()
   if not pd.buttonIsPressed(pd.kButtonA) then return end
@@ -117,18 +133,6 @@ function toggleBlockIfAButtonDown()
   end
 end
 
--- function pd.downButtonDown()
---   local col, row = cursor:getLocation()
---   cursor:setLocation(col, row + 1)
---   toggleBlockIfAButtonDown()
--- end
-
--- function pd.upButtonDown()
---   local col, row = cursor:getLocation()
---   cursor:setLocation(col, row - 1)
---   toggleBlockIfAButtonDown()
--- end
-
 function whileDpadDown()
   local col, row = cursor:getLocation()
   local state = pd.getButtonState()
@@ -142,50 +146,46 @@ function whileDpadDown()
   toggleBlockIfAButtonDown()
 end
 
-function startDpadPolling()
-  if keyTimer then return end
-  keyTimer = pd.timer.keyRepeatTimerWithDelay(300, 30, whileDpadDown)
+function handleInput()
+  if state == InDraw then
+    handleDrawInput()
+  elseif state == InDialog then
+    handleEraseDialogInput()
+  end
 end
 
-function stopDpadPolling()
-  if not keyTimer then return end
-  keyTimer:remove()
-  keyTimer = nil
+function handleEraseDialogInput()
+  if pd.buttonJustPressed(pd.kButtonA) then
+    eraseAllBlocks()
+    closeDialog()
+  elseif pd.buttonJustPressed(pd.kButtonB) then
+    closeDialog()
+  end
 end
 
-function pd.rightButtonDown()
-  startDpadPolling()
+function handleDrawInput()
+  if pd.buttonJustPressed(pd.kButtonUp)
+      or pd.buttonJustPressed(pd.kButtonRight)
+      or pd.buttonJustPressed(pd.kButtonDown)
+      or pd.buttonJustPressed(pd.kButtonLeft) then
+    startCursorPolling()
+  elseif pd.buttonJustReleased(pd.kButtonUp)
+      or pd.buttonJustReleased(pd.kButtonRight)
+      or pd.buttonJustReleased(pd.kButtonDown)
+      or pd.buttonJustReleased(pd.kButtonLeft) then
+    stopCursorPolling()
+  end
+
+  if pd.buttonJustPressed(pd.kButtonA) then
+    toggleBlockUnderCursor()
+  end
+
+  if pd.buttonJustPressed(pd.kButtonB) then
+    openDialog()
+  end
 end
 
-function pd.rightButtonUp()
-  stopDpadPolling()
-end
-
-function pd.leftButtonDown()
-  startDpadPolling()
-end
-
-function pd.leftButtonUp()
-  stopDpadPolling()
-end
-
-function pd.upButtonDown()
-  startDpadPolling()
-end
-
-function pd.upButtonUp()
-  stopDpadPolling()
-end
-
-function pd.downButtonDown()
-  startDpadPolling()
-end
-
-function pd.downButtonUp()
-  stopDpadPolling()
-end
-
-function pd.AButtonDown()
+function toggleBlockUnderCursor()
   local col, row = cursor:getLocation()
   local oldBlock = matrix.remove(blocks, col, row)
 
@@ -198,13 +198,31 @@ function pd.AButtonDown()
   end
 end
 
-function pd.BButtonDown()
-  clearBlocks()
+function openDialog()
+  state = InDialog
+  dialog = Dialog('Ⓐ *Erase drawing*\nⒷ *Cancel*')
+  cursor:setFlash(false)
 end
 
-pd.getSystemMenu():addMenuItem('Erase All', clearBlocks)
+function closeDialog()
+  state = InDraw
+  dialog:remove()
+  dialog = nil
+  cursor:setFlash(true)
+end
 
+function startCursorPolling()
+  if keyTimer then return end
+  keyTimer = pd.timer.keyRepeatTimerWithDelay(300, 30, whileDpadDown)
+end
 
+function stopCursorPolling()
+  if not keyTimer then return end
+  keyTimer:remove()
+  keyTimer = nil
+end
+
+-- pd.getSystemMenu():addMenuItem('Erase All', eraseAllBlocks)
 
 function pd.gameWillTerminate()
   save()

@@ -14,6 +14,7 @@ function Cursor:init(col, row)
 
   self._isBig = false
   self._wasBig = true
+  self._flash = true
 end
 
 function Cursor:setLocation(col, row)
@@ -27,8 +28,17 @@ function Cursor:getLocation()
   return self._col, self._row
 end
 
+function Cursor:setFlash(on)
+  self._flash = on
+end
+
 function Cursor:update()
-  if self._wasBig == self._isBig then
+  if not self._flash then
+    self:setImage(nil)
+    return
+  end
+
+  if self._wasBig == self._isBig or not self._flash then
     -- nothing to do since size matches
     return
   end
