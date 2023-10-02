@@ -2,7 +2,6 @@ import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/object"
 import "CoreLibs/timer"
--- import "CoreLibs/geometry"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics

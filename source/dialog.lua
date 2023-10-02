@@ -1,8 +1,6 @@
 import "CoreLibs/graphics"
 import "CoreLibs/object"
-
-local pd <const> = playdate
-local gfx <const> = pd.graphics
+import "globals"
 
 
 class('Dialog').extends(gfx.sprite)
@@ -15,11 +13,7 @@ local kLeading = 12
 
 class('Background').extends(gfx.sprite)
 
-function inContext(image, callback)
-	gfx.pushContext(image)
-	pcall(callback)
-	gfx.popContext()
-end
+
 
 function Background:init()
 	Background.super.init(self)
@@ -36,6 +30,7 @@ function Background:init()
 		image:drawFaded(0, 0, .25, gfx.image.kDitherTypeBayer4x4)
 	end)
 
+	self:setUpdatesEnabled(false)
 	self:setCenter(0, 0)
 	self:setImage(alpha)
 end

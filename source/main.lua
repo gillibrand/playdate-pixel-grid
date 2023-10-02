@@ -1,21 +1,22 @@
 import "CoreLibs/graphics"
 
+import "PixApp"
 import "Grid"
 import "Cursor"
 import "Block"
 import "matrix"
-import "dialog"
+import "Dialog"
+import "Swap"
 
 PxSize = 20
 HalfSize = PxSize / 2
 
-local pd <const> = playdate
-local gfx <const> = pd.graphics
 
-local grid = Grid()
-grid:add()
+local grid
 
 local didRemoveBlock = false
+
+local isShowGrid = true
 
 local cursor = Cursor(2, 2)
 cursor:add()
@@ -27,14 +28,18 @@ COLS = 20
 
 InDraw = 0
 InDialog = 1
+InLoad = 2
 
-local state = InDraw
+local appState = InDraw
 
 local blocks = matrix.new(COLS, ROWS)
 
-local Pix1 <const> = 'pix1'
-local Pix2 <const> = 'pix2'
+local Pix1 <const> = 'Drawing 1'
+local Pix2 <const> = 'Drawing 2'
+local Pix3 <const> = 'Drawing 3'
 local Metadata <const> = 'metadata'
+
+local currentFilename = Pix1
 
 function addBlock(col, row)
   local block = Block(col, row)
@@ -42,10 +47,8 @@ function addBlock(col, row)
   block:add()
 end
 
-function save()
-  -- Save matrix file
+function saveDrawingFile(name)
   local blockCoords = {}
-  -- matrix.log(blocks)
 
   for row = 1, COLS do
     for col = 1, ROWS do
@@ -57,24 +60,36 @@ function save()
     end
   end
 
-  -- Save cursor loc (metadata file)
-  pd.datastore.write(blockCoords, Pix1)
+  pd.datastore.write(blockCoords, currentFilename)
+end
 
+function saveState()
+  -- Save matrix file
+  saveDrawingFile(currentFilename)
+
+  -- Save cursor loc (metadata file)
   local row, col = cursor:getLocation()
   local metadata = {}
   metadata.cursor = { row, col }
+  metadata.currentFile = currentFilename
+  metadata.isShowGrid = isShowGrid
+
   pd.datastore.write(metadata, Metadata)
   local x = pd.datastore.read(Metadata)
 end
 
 --- Erases all visible blocks and animates them away
-function eraseAllBlocks()
+function eraseAllBlocks(animate)
   local fallingBlocks = blocks
   blocks = matrix.new(20, 12)
 
   local x = matrix.all(fallingBlocks)
   for _, block in ipairs(matrix.all(fallingBlocks)) do
-    block:fall()
+    if animate then
+      block:fall()
+    else
+      block:remove()
+    end
   end
 end
 
@@ -86,31 +101,83 @@ function logTable(t)
   print('done')
 end
 
-function load()
-  eraseAllBlocks()
+function loadDrawingFile(file)
+  eraseAllBlocks(false)
 
-  local blockCoords = pd.datastore.read(Pix1)
+  local blockCoords = pd.datastore.read(file)
+
   if blockCoords then
     for i, coord in ipairs(blockCoords) do
       addBlock(coord[1], coord[2])
     end
   end
+end
 
+function restoreState()
   local metadata = pd.datastore.read(Metadata)
+
   if metadata then
-    local coords = metadata['cursor']
+    isShowGrid = metadataisShowGrid
+    if isShowGrid == nil then
+      isShowGrid = true
+    end
+
+    toggleGrid(isShowGrid)
+
+    local coords = metadata.cursor
     if coords then
       cursor:setLocation(coords[1], coords[2])
     end
+
+    currentFilename = metadata.currentFile or Pix1
+  end
+
+  loadDrawingFile(currentFilename)
+
+  local menu = playdate.getSystemMenu()
+  menu:removeAllMenuItems()
+  menu:addOptionsMenuItem('Open', { Pix1, Pix2, Pix3 }, currentFilename, swapDrawing)
+  menu:addCheckmarkMenuItem('Show Grid', isShowGrid, toggleGrid)
+end
+
+function toggleGrid(show)
+  isShowGrid = show
+
+  if isShowGrid and grid == nil then
+    grid = Grid()
+    grid:add()
+  elseif not isShowGrid and grid ~= nil then
+    grid:remove()
+    grid = nil
   end
 end
 
-load()
+function swapDrawing(newFilename)
+  appState = InLoad
+  saveDrawingFile(currentFilename)
+
+  local animateForward = newFilename > currentFilename
+  Swap(
+    animateForward,
+    function()
+      loadDrawingFile(newFilename)
+      currentFilename = newFilename
+    end,
+    function()
+      appState = InDraw
+    end)
+end
+
+function endSwap()
+
+end
+
+restoreState()
+
 
 function playdate.update()
   gfx.sprite.update()
   pd.timer.updateTimers()
-  -- pd.drawFPS(10, 10)
 
   handleInput()
 end
@@ -147,16 +214,16 @@ function whileDpadDown()
 end
 
 function handleInput()
-  if state == InDraw then
+  if appState == InDraw then
     handleDrawInput()
-  elseif state == InDialog then
+  elseif appState == InDialog then
     handleEraseDialogInput()
   end
 end
 
 function handleEraseDialogInput()
   if pd.buttonJustPressed(pd.kButtonA) then
-    eraseAllBlocks()
+    eraseAllBlocks(true)
     closeDialog()
   elseif pd.buttonJustPressed(pd.kButtonB) then
     closeDialog()
@@ -199,13 +266,13 @@ function toggleBlockUnderCursor()
 end
 
 function openDialog()
-  state = InDialog
+  appState = InDialog
   dialog = Dialog('Ⓐ *Erase drawing*\nⒷ *Cancel*')
   cursor:setFlash(false)
 end
 
 function closeDialog()
-  state = InDraw
+  appState = InDraw
   dialog:remove()
   dialog = nil
   cursor:setFlash(true)
@@ -222,12 +289,10 @@ function stopCursorPolling()
   keyTimer = nil
 end
 
--- pd.getSystemMenu():addMenuItem('Erase All', eraseAllBlocks)
-
 function pd.gameWillTerminate()
-  save()
+  saveState()
 end
 
 function pd.deviceWillSleep()
-  save()
+  saveState()
 end
