@@ -2,6 +2,8 @@ import "CoreLibs/graphics"
 import "CoreLibs/object"
 import "globals"
 
+local pd <const> = playdate
+local gfx <const> = pd.graphics
 
 class('Dialog').extends(gfx.sprite)
 
@@ -11,12 +13,10 @@ local kRadius = 5
 local kBorder = 2
 local kLeading = 12
 
-class('Background').extends(gfx.sprite)
+class('Underlay').extends(gfx.sprite)
 
-
-
-function Background:init()
-	Background.super.init(self)
+function Underlay:init()
+	Underlay.super.init(self)
 
 	-- All black image
 	local image = gfx.image.new(pd.display.getSize())
@@ -37,16 +37,17 @@ end
 
 function Dialog:init(message)
 	Dialog.super.init(self)
+
 	local w, h = gfx.getTextSize(message, nil, kLeading)
 	local dw = w + 2 * kPadding + 2 * kBorder + 2 * kMargin
 	local dh = h + 2 * kPadding + 2 * kBorder + 2 * kMargin
 	local image = gfx.image.new(dw, dh)
 
-	gfx.pushContext(image)
-	do
+	inContext(image, function()
 		-- clear background
 		gfx.setColor(gfx.kColorWhite)
 		gfx.fillRoundRect(0, 0, dw, dh, kRadius)
+		self.onOk = nil
 
 		-- border border. Since line widths grow OUT from the line, this actually eats into the margin.
 		-- I just set a bigger margin to offset that
@@ -55,21 +56,34 @@ function Dialog:init(message)
 		gfx.drawRoundRect(kMargin, kMargin, dw - 2 * kMargin, dh - 2 * kMargin, kRadius)
 
 		gfx.drawText(message, kMargin + kBorder + kPadding, kMargin + kBorder + kPadding, nil, kLeading)
-	end
-	gfx.popContext()
+	end)
 	self:setImage(image)
 
 	self:moveTo(200, 120)
 	self:setZIndex(200)
 
-	self.bg = Background()
-	self.bg:setZIndex(199)
-	self.bg:add()
+	self.underlay = Underlay()
+	self.underlay:setZIndex(199)
+	self.underlay:add()
 
+	pd.inputHandlers.push({
+		BButtonDown = function()
+			callback(self.onClose)
+			self:remove()
+		end,
+		AButtonDown = function()
+			callback(self.onClose)
+			callback(self.onOk)
+			self:remove()
+		end
+	})
+
+	self:setUpdatesEnabled(false)
 	self:add()
 end
 
 function Dialog:remove()
-	self.bg:remove()
+	self.underlay:remove()
+	pd.inputHandlers.pop()
 	Dialog.super.remove(self)
 end

@@ -14,7 +14,7 @@ class('Swap').extends(gfx.sprite)
 -- @param midCallback Once the screen move off display this is called and should update the new
 -- screen to animate in.
 -- @param endCallback Called when the swap is complete. This removes itself automatically.
-function Swap:init(ltr, midCallback, endCallback)
+function Swap:init(isForward, midCallback, endCallback)
 	self.midCallback = midCallback
 	self.endCallback = endCallback
 
@@ -24,14 +24,12 @@ function Swap:init(ltr, midCallback, endCallback)
 	self.inAnim = nil
 	self:setUpdatesEnabled(true)
 
-
 	self:add()
 end
 
 function Swap:update()
 	if self.outAnim then
 		if not self.outAnim:ended() then
-			print(self.outAnim:currentValue())
 			pd.display.setOffset(self.outAnim:currentValue(), 0)
 		else
 			self.outAnim = nil

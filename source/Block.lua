@@ -6,6 +6,7 @@ import "CoreLibs/timer"
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 
+--- A square block "pixel" in a drawing. Each is a sprite that can be animated away.
 class('Block').extends(gfx.sprite)
 
 function Block:init(col, row)
@@ -21,12 +22,14 @@ function Block:init(col, row)
   self:updatesEnabled(false)
 end
 
+--- Positions this block on the grid. 1 indexed. Starts from top-left.
 function Block:setLocation(col, row)
   self._col = col
   self._row = row
-  self:moveTo((col - 1) * PxSize + HalfSize, (row - 1) * 20 + HalfSize)
+  self:moveTo((col - 1) * kPxSize + kHalfPxSize, (row - 1) * 20 + kHalfPxSize)
 end
 
+--- Animates this block so it falls off the screen. Is removed at the end.
 function Block:fall()
   local line = pd.geometry.lineSegment.new(self.x, self.y, self.x, 280)
   self._anim = gfx.animator.new(1000, line, pd.easingFunctions.outBounce)

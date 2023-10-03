@@ -15,11 +15,11 @@ function Grid:init()
 	local image = gfx.image.new(pd.display.getSize())
 	gfx.pushContext(image)
 	for i = 1, 19 do
-		local x = i * PxSize
+		local x = i * kPxSize
 		gfx.drawLine(x, 0, x, 240)
 	end
 	for i = 1, 11 do
-		local y = i * PxSize
+		local y = i * kPxSize
 		gfx.drawLine(0, y, 400, y)
 	end
 	gfx.popContext()
