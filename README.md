@@ -1,4 +1,4 @@
-# Playdate Pixel Grid
+# Pix Grid
 
 A simple pixel art toy for the [Playdate](https://play.date/).
 
