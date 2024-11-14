@@ -15,6 +15,7 @@ local kLeading = 12
 
 class('Underlay').extends(gfx.sprite)
 
+--- Gray background behind a modal dialog.
 function Underlay:init()
 	Underlay.super.init(self)
 
@@ -35,8 +36,13 @@ function Underlay:init()
 	self:setImage(alpha)
 end
 
+-- This is actually the "Erase?" dialog. Pushes its own input handlers. Just instantiate to show. Be
+-- sure to set the callbacks onOk and onClose.
 function Dialog:init(message)
 	Dialog.super.init(self)
+
+	self.onClose = nil
+	self.onOk = nil
 
 	local w, h = gfx.getTextSize(message, nil, kLeading)
 	local dw = w + 2 * kPadding + 2 * kBorder + 2 * kMargin

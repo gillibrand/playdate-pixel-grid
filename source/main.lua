@@ -5,7 +5,7 @@ import "Cursor"
 import "Block"
 import "matrix"
 import "Dialog"
-import "Swap"
+import "SwapTransition"
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
@@ -167,8 +167,8 @@ function swapDrawing(newFilename)
   saveDrawingAs(currentFilename)
 
   local animateForward = newFilename > currentFilename
-  print('animateForward', animateForward)
-  Swap(
+
+  SwapTransition(
     animateForward,
     function()
       loadDrawingFrom(newFilename)

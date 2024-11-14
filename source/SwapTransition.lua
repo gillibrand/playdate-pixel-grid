@@ -6,15 +6,16 @@ import "CoreLibs/timer"
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 
-class('Swap').extends(gfx.sprite)
+class('SwapTransition').extends(gfx.sprite)
 
---- Effect to swap the entire screen when transitioning between drawings.
+--- Effect to swap the entire screen when transitioning between drawings. Start with the
+--  current drawing. During on `midCallback` load the new drawing and it will slide in.
 --
 -- @param isForward Moves sceens from left to right is true; else right to left.
 -- @param midCallback Once the screen move off display this is called and should update the new
 -- screen to animate in.
 -- @param endCallback Called when the swap is complete. This removes itself automatically.
-function Swap:init(isForward, midCallback, endCallback)
+function SwapTransition:init(isForward, midCallback, endCallback)
 	self.midCallback = midCallback
 	self.endCallback = endCallback
 
@@ -27,7 +28,7 @@ function Swap:init(isForward, midCallback, endCallback)
 	self:add()
 end
 
-function Swap:update()
+function SwapTransition:update()
 	if self.outAnim then
 		if not self.outAnim:ended() then
 			pd.display.setOffset(self.outAnim:currentValue(), 0)
