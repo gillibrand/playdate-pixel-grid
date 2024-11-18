@@ -4,4 +4,4 @@ description=A simple pixel art toy.
 bundleID=com.gillibrand.jay.pixelgrid
 version=1.0
 imagePath=SystemAssets/
-buildNumber=540
+buildNumber=547
